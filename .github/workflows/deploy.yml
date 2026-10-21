@@ -1,0 +1,58 @@
+name: Build and Deploy Infrastructure to Azure
+
+# Trigger this automation workflow every time code is merged into the main branch
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # JOB 1: Build your Docker web application image and store it safely for free on GitHub
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.sha_short }}
+    steps:
+      - name: Checkout Code from Repository
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Short Git Tracking Tag
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Compile and Push Live Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/cloud-portfolio-app:latest
+            ghcr.io/${{ github.repository_owner }}/cloud-portfolio-app:${{ steps.vars.outputs.sha_short }}
+
+  # JOB 2: Use your Terraform files to automatically spin up or update your Azure resources
+  deploy-azure-infrastructure:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code from Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform Engine
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Run Terraform Initialization
+        run: terraform init
+
+      - name: Execute Automated Cloud Deployment
+        run: terraform apply -auto-approve
