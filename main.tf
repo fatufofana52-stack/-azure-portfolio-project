@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "rg-cloud-bootcamp-project"
+  name     = "rg-cloud-portfolio-v3"
   location = "East US"
 }
 
