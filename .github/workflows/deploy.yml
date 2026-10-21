@@ -1,6 +1,5 @@
 name: Build and Deploy Infrastructure to Azure
 
-# Trigger this automation workflow every time code is merged into the main branch
 on:
   push:
     branches:
@@ -11,7 +10,6 @@ permissions:
   packages: write
 
 jobs:
-  # JOB 1: Build your Docker web application image and store it safely for free on GitHub
   build-and-push-image:
     runs-on: ubuntu-latest
     outputs:
@@ -40,7 +38,6 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/cloud-portfolio-app:latest
             ghcr.io/${{ github.repository_owner }}/cloud-portfolio-app:${{ steps.vars.outputs.sha_short }}
 
-  # JOB 2: Use your Terraform files to automatically spin up or update your Azure resources
   deploy-azure-infrastructure:
     needs: build-and-push-image
     runs-on: ubuntu-latest
@@ -53,6 +50,17 @@ jobs:
 
       - name: Run Terraform Initialization
         run: terraform init
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
       - name: Execute Automated Cloud Deployment
         run: terraform apply -auto-approve
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
