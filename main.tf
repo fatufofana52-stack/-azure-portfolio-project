@@ -9,14 +9,14 @@ terraform {
 
 provider "azurerm" {
   features {}
+  skip_provider_registration = true
 }
 
-# Create an Azure Resource Group to house our bootcamp project
 resource "azurerm_resource_group" "rg" {
   name     = "rg-cloud-bootcamp-project"
   location = "East US"
 }
-# 1. Create a Log Analytics Workspace (Required for monitoring Container Apps)
+
 resource "azurerm_log_analytics_workspace" "law" {
   name                = "law-bootcamp-logs"
   location            = azurerm_resource_group.rg.location
@@ -24,7 +24,6 @@ resource "azurerm_log_analytics_workspace" "law" {
   sku                 = "PerGB2018"
 }
 
-# 2. Create the Container App Environment (The secure baseline cluster)
 resource "azurerm_container_app_environment" "env" {
   name                       = "cae-bootcamp-env"
   location                   = azurerm_resource_group.rg.location
@@ -32,7 +31,6 @@ resource "azurerm_container_app_environment" "env" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
 }
 
-# 3. Create the Live Container App pointing to your GitHub Package image
 resource "azurerm_container_app" "app" {
   name                         = "portfolio-web-app"
   container_app_environment_id = azurerm_container_app_environment.env.id
